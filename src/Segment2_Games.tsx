@@ -4,6 +4,7 @@ import {
   useCurrentFrame,
   useVideoConfig,
   interpolate,
+  spring,
   Sequence,
   Img,
   staticFile,
@@ -222,6 +223,100 @@ const GameCard: React.FC<{
   );
 };
 
+const TypewriterText: React.FC<{
+  text: string;
+  startFrame: number;
+  speed?: number;
+  style?: React.CSSProperties;
+}> = ({ text, startFrame, speed = 1.5, style }) => {
+  const frame = useCurrentFrame();
+  const localFrame = frame - startFrame;
+  if (localFrame < 0) return null;
+
+  const charsToShow = Math.min(Math.floor(localFrame * speed), text.length);
+  const displayText = text.slice(0, charsToShow);
+  const showCursor = localFrame % 16 < 10 && charsToShow < text.length;
+
+  return (
+    <span
+      style={{
+        fontFamily: "monospace",
+        fontSize: 13,
+        letterSpacing: "1.5px",
+        color: "#4a9eff",
+        textTransform: "uppercase" as const,
+        ...style,
+      }}
+    >
+      {displayText}
+      {showCursor && (
+        <span style={{ color: "#00d4ff", opacity: 0.8 }}>▌</span>
+      )}
+    </span>
+  );
+};
+
+const PulsingDot: React.FC<{ color: string; delay: number }> = ({
+  color,
+  delay,
+}) => {
+  const frame = useCurrentFrame();
+  const localFrame = frame - delay;
+  if (localFrame < 0) return null;
+
+  const pulse = Math.sin(localFrame * 0.15) * 0.3 + 0.7;
+
+  return (
+    <div
+      style={{
+        width: 8,
+        height: 8,
+        borderRadius: "50%",
+        backgroundColor: color,
+        opacity: pulse,
+        boxShadow: `0 0 8px ${color}`,
+      }}
+    />
+  );
+};
+
+const SlideInText: React.FC<{
+  children: React.ReactNode;
+  delay: number;
+  direction?: "left" | "right" | "up";
+  style?: React.CSSProperties;
+}> = ({ children, delay, direction = "up", style }) => {
+  const frame = useCurrentFrame();
+  const { fps } = useVideoConfig();
+
+  const localFrame = frame - delay;
+  if (localFrame < 0) return null;
+
+  const progress = spring({
+    frame: localFrame,
+    fps,
+    config: { damping: 80, stiffness: 200, mass: 0.5 },
+  });
+
+  const transforms = {
+    left: `translateX(${interpolate(progress, [0, 1], [-40, 0])}px)`,
+    right: `translateX(${interpolate(progress, [0, 1], [40, 0])}px)`,
+    up: `translateY(${interpolate(progress, [0, 1], [25, 0])}px)`,
+  };
+
+  return (
+    <div
+      style={{
+        opacity: progress,
+        transform: transforms[direction],
+        ...style,
+      }}
+    >
+      {children}
+    </div>
+  );
+};
+
 const HeaderBadge: React.FC<{ text: string; delay: number }> = ({
   text,
   delay,
@@ -232,10 +327,6 @@ const HeaderBadge: React.FC<{ text: string; delay: number }> = ({
   const localFrame = frame - delay;
   if (localFrame < 0) return null;
 
-  const opacity = interpolate(localFrame, [0, fps * 0.3], [0, 1], {
-    extrapolateRight: "clamp",
-  });
-
   return (
     <div
       style={{
@@ -243,22 +334,18 @@ const HeaderBadge: React.FC<{ text: string; delay: number }> = ({
         top: 40,
         left: "50%",
         transform: "translateX(-50%)",
-        opacity,
+        display: "flex",
+        alignItems: "center",
+        gap: 10,
       }}
     >
-      <p
-        style={{
-          fontFamily,
-          fontSize: 12,
-          fontWeight: 400,
-          color: "#4a9eff88",
-          margin: 0,
-          letterSpacing: "3px",
-          textTransform: "uppercase",
-        }}
-      >
-        {text}
-      </p>
+      <PulsingDot color="#22d3ee" delay={delay} />
+      <TypewriterText
+        text={text}
+        startFrame={delay}
+        speed={1.8}
+        style={{ fontSize: 11, letterSpacing: "2.5px", color: "#22d3ee" }}
+      />
     </div>
   );
 };
@@ -321,45 +408,43 @@ const BottomTagline: React.FC = () => {
   const frame = useCurrentFrame();
   const { fps } = useVideoConfig();
 
-  const opacity = interpolate(frame, [fps * 1.5, fps * 2], [0, 1], {
-    extrapolateLeft: "clamp",
-    extrapolateRight: "clamp",
-  });
-
   return (
     <div
       style={{
         position: "absolute",
-        bottom: 50,
+        bottom: 45,
         left: "50%",
         transform: "translateX(-50%)",
-        opacity,
         display: "flex",
         flexDirection: "column",
         alignItems: "center",
-        gap: 8,
+        gap: 10,
       }}
     >
-      <div
-        style={{
-          width: 60,
-          height: 1,
-          background:
-            "linear-gradient(90deg, transparent, #38bdf8, transparent)",
-        }}
-      />
-      <p
-        style={{
-          fontFamily,
-          fontSize: 14,
-          fontWeight: 300,
-          color: "#94a3b8",
-          margin: 0,
-          letterSpacing: "0.5px",
-        }}
-      >
-        No gloves. No sensors. Just a webcam.
-      </p>
+      <SlideInText delay={Math.round(fps * 1.8)} direction="up">
+        <p
+          style={{
+            fontFamily,
+            fontSize: 16,
+            fontWeight: 300,
+            color: "#94a3b8",
+            margin: 0,
+          }}
+        >
+          No gloves. No sensors.{" "}
+          <span style={{ color: "#e2e8f0", fontWeight: 500 }}>
+            Just a webcam.
+          </span>
+        </p>
+      </SlideInText>
+      <SlideInText delay={Math.round(fps * 2.3)} direction="up">
+        <TypewriterText
+          text="[webrtc · cv pipeline · no sdk · any device]"
+          startFrame={Math.round(fps * 2.4)}
+          speed={2}
+          style={{ fontSize: 10, color: "#4a9eff55" }}
+        />
+      </SlideInText>
     </div>
   );
 };

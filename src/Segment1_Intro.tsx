@@ -4,6 +4,7 @@ import {
   useCurrentFrame,
   useVideoConfig,
   interpolate,
+  spring,
   Sequence,
 } from "remotion";
 import { fontFamily } from "./fonts";
@@ -82,93 +83,97 @@ const GlowLine: React.FC<{ progress: number }> = ({ progress }) => {
   );
 };
 
-const AnimatedText: React.FC<{
-  text: string;
-  highlight?: string;
+const SlideInText: React.FC<{
+  children: React.ReactNode;
   delay: number;
-  fontSize?: number;
-  subtitle?: string;
-}> = ({ text, highlight, delay, fontSize = 72, subtitle }) => {
+  direction?: "left" | "right" | "up";
+  style?: React.CSSProperties;
+}> = ({ children, delay, direction = "up", style }) => {
   const frame = useCurrentFrame();
   const { fps } = useVideoConfig();
 
   const localFrame = frame - delay;
   if (localFrame < 0) return null;
 
-  const textOpacity = interpolate(localFrame, [0, fps * 0.4], [0, 1], {
-    extrapolateRight: "clamp",
+  const progress = spring({
+    frame: localFrame,
+    fps,
+    config: { damping: 80, stiffness: 200, mass: 0.5 },
   });
 
-  const textY = interpolate(localFrame, [0, fps * 0.4], [20, 0], {
-    extrapolateRight: "clamp",
-  });
-
-  const subtitleOpacity = interpolate(
-    localFrame,
-    [fps * 0.5, fps * 0.9],
-    [0, 1],
-    { extrapolateLeft: "clamp", extrapolateRight: "clamp" }
-  );
-
-  const parts = highlight ? text.split(highlight) : [text];
+  const transforms = {
+    left: `translateX(${interpolate(progress, [0, 1], [-40, 0])}px)`,
+    right: `translateX(${interpolate(progress, [0, 1], [40, 0])}px)`,
+    up: `translateY(${interpolate(progress, [0, 1], [25, 0])}px)`,
+  };
 
   return (
     <div
       style={{
-        display: "flex",
-        flexDirection: "column",
-        alignItems: "center",
-        gap: 16,
-        opacity: textOpacity,
-        transform: `translateY(${textY}px)`,
+        opacity: progress,
+        transform: transforms[direction],
+        ...style,
       }}
     >
-      <h1
-        style={{
-          fontFamily,
-          fontSize,
-          fontWeight: 300,
-          color: "white",
-          margin: 0,
-          letterSpacing: "-1px",
-        }}
-      >
-        {highlight ? (
-          <>
-            {parts[0]}
-            <span
-              style={{
-                fontWeight: 600,
-                background: "linear-gradient(135deg, #60a5fa, #38bdf8, #22d3ee)",
-                WebkitBackgroundClip: "text",
-                WebkitTextFillColor: "transparent",
-              }}
-            >
-              {highlight}
-            </span>
-            {parts[1]}
-          </>
-        ) : (
-          text
-        )}
-      </h1>
-      {subtitle && (
-        <p
-          style={{
-            fontFamily,
-            fontSize: 24,
-            fontWeight: 300,
-            color: "#94a3b8",
-            margin: 0,
-            letterSpacing: "2px",
-            textTransform: "uppercase",
-            opacity: subtitleOpacity,
-          }}
-        >
-          {subtitle}
-        </p>
-      )}
+      {children}
     </div>
+  );
+};
+
+const TypewriterText: React.FC<{
+  text: string;
+  startFrame: number;
+  speed?: number;
+  style?: React.CSSProperties;
+}> = ({ text, startFrame, speed = 1.5, style }) => {
+  const frame = useCurrentFrame();
+  const localFrame = frame - startFrame;
+  if (localFrame < 0) return null;
+
+  const charsToShow = Math.min(Math.floor(localFrame * speed), text.length);
+  const displayText = text.slice(0, charsToShow);
+  const showCursor = localFrame % 16 < 10 && charsToShow < text.length;
+
+  return (
+    <span
+      style={{
+        fontFamily: "monospace",
+        fontSize: 13,
+        letterSpacing: "1.5px",
+        color: "#4a9eff",
+        textTransform: "uppercase" as const,
+        ...style,
+      }}
+    >
+      {displayText}
+      {showCursor && (
+        <span style={{ color: "#00d4ff", opacity: 0.8 }}>▌</span>
+      )}
+    </span>
+  );
+};
+
+const PulsingDot: React.FC<{ color: string; delay: number }> = ({
+  color,
+  delay,
+}) => {
+  const frame = useCurrentFrame();
+  const localFrame = frame - delay;
+  if (localFrame < 0) return null;
+
+  const pulse = Math.sin(localFrame * 0.15) * 0.3 + 0.7;
+
+  return (
+    <div
+      style={{
+        width: 8,
+        height: 8,
+        borderRadius: "50%",
+        backgroundColor: color,
+        opacity: pulse,
+        boxShadow: `0 0 8px ${color}`,
+      }}
+    />
   );
 };
 
@@ -201,12 +206,48 @@ export const Segment1Intro: React.FC = () => {
           }}
         >
           <GlowLine progress={lineProgress} />
-          <AnimatedText
-            text="This is Maria."
-            highlight="Maria"
-            delay={Math.round(fps * 0.3)}
-            fontSize={78}
-          />
+          <div
+            style={{
+              display: "flex",
+              flexDirection: "column",
+              alignItems: "center",
+              gap: 16,
+            }}
+          >
+            <SlideInText delay={Math.round(fps * 0.2)} direction="up">
+              <div style={{ display: "flex", alignItems: "center", gap: 12 }}>
+                <PulsingDot color="#22d3ee" delay={Math.round(fps * 0.2)} />
+                <TypewriterText
+                  text="patient profile"
+                  startFrame={Math.round(fps * 0.3)}
+                />
+              </div>
+            </SlideInText>
+            <SlideInText delay={Math.round(fps * 0.5)} direction="up">
+              <h1
+                style={{
+                  fontFamily,
+                  fontSize: 78,
+                  fontWeight: 300,
+                  color: "white",
+                  margin: 0,
+                  letterSpacing: "-1px",
+                }}
+              >
+                Meet{" "}
+                <span
+                  style={{
+                    fontWeight: 600,
+                    background: "linear-gradient(135deg, #60a5fa, #38bdf8, #22d3ee)",
+                    WebkitBackgroundClip: "text",
+                    WebkitTextFillColor: "transparent",
+                  }}
+                >
+                  Maria.
+                </span>
+              </h1>
+            </SlideInText>
+          </div>
         </AbsoluteFill>
       </Sequence>
 
@@ -218,12 +259,47 @@ export const Segment1Intro: React.FC = () => {
             alignItems: "center",
           }}
         >
-          <AnimatedText
-            text="71 years old. Stroke survivor."
-            highlight="Stroke survivor."
-            delay={0}
-            fontSize={64}
-          />
+          <div
+            style={{
+              display: "flex",
+              flexDirection: "column",
+              alignItems: "center",
+              gap: 16,
+            }}
+          >
+            <SlideInText delay={0} direction="up">
+              <h1
+                style={{
+                  fontFamily,
+                  fontSize: 64,
+                  fontWeight: 300,
+                  color: "white",
+                  margin: 0,
+                  letterSpacing: "-1px",
+                }}
+              >
+                71 years old.{" "}
+                <span
+                  style={{
+                    fontWeight: 600,
+                    background: "linear-gradient(135deg, #60a5fa, #38bdf8, #22d3ee)",
+                    WebkitBackgroundClip: "text",
+                    WebkitTextFillColor: "transparent",
+                  }}
+                >
+                  Stroke survivor.
+                </span>
+              </h1>
+            </SlideInText>
+            <SlideInText delay={Math.round(fps * 0.6)} direction="up">
+              <TypewriterText
+                text="post-stroke rehabilitation · home-based recovery"
+                startFrame={fps * 3 + Math.round(fps * 0.7)}
+                speed={2}
+                style={{ fontSize: 11, color: "#4a9eff66" }}
+              />
+            </SlideInText>
+          </div>
         </AbsoluteFill>
       </Sequence>
 
@@ -235,13 +311,61 @@ export const Segment1Intro: React.FC = () => {
             alignItems: "center",
           }}
         >
-          <AnimatedText
-            text="Her next check-up? 6 weeks away."
-            highlight="6 weeks away."
-            delay={0}
-            fontSize={58}
-            subtitle="No one is tracking her recovery at home"
-          />
+          <div
+            style={{
+              display: "flex",
+              flexDirection: "column",
+              alignItems: "center",
+              gap: 16,
+            }}
+          >
+            <SlideInText delay={0} direction="up">
+              <h1
+                style={{
+                  fontFamily,
+                  fontSize: 58,
+                  fontWeight: 300,
+                  color: "white",
+                  margin: 0,
+                  letterSpacing: "-1px",
+                }}
+              >
+                Her next check-up?{" "}
+                <span
+                  style={{
+                    fontWeight: 600,
+                    background: "linear-gradient(135deg, #60a5fa, #38bdf8, #22d3ee)",
+                    WebkitBackgroundClip: "text",
+                    WebkitTextFillColor: "transparent",
+                  }}
+                >
+                  6 weeks away.
+                </span>
+              </h1>
+            </SlideInText>
+            <SlideInText delay={Math.round(fps * 0.6)} direction="up">
+              <p
+                style={{
+                  fontFamily,
+                  fontSize: 18,
+                  fontWeight: 300,
+                  color: "#94a3b8",
+                  margin: 0,
+                  lineHeight: 1.5,
+                }}
+              >
+                No one is tracking her recovery at home
+              </p>
+            </SlideInText>
+            <SlideInText delay={Math.round(fps * 1.2)} direction="up">
+              <TypewriterText
+                text="[blind spot · no data · no early warning]"
+                startFrame={Math.round(fps * 5.5) + Math.round(fps * 1.3)}
+                speed={2}
+                style={{ fontSize: 11, color: "#4a9eff66" }}
+              />
+            </SlideInText>
+          </div>
         </AbsoluteFill>
       </Sequence>
     </AbsoluteFill>

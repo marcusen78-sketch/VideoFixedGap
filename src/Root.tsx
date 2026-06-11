@@ -5,6 +5,9 @@ import { Segment2Games } from "./Segment2_Games";
 import { Segment3Dashboard } from "./Segment3_Dashboard";
 import { Segment4Notification } from "./Segment4_Notification";
 import { Segment5Monitoring } from "./Segment5_Monitoring";
+import { Segment6Metrics } from "./Segment6_Metrics";
+import { Segment8DeploymentImpact } from "./Segment8_DeploymentImpact";
+import { Segment10Manifesto } from "./Segment10_Manifesto";
 
 export const RemotionRoot: React.FC = () => {
   return (
@@ -45,6 +48,30 @@ export const RemotionRoot: React.FC = () => {
         id="Segment5-Monitoring"
         component={Segment5Monitoring}
         durationInFrames={330}
+        fps={30}
+        width={1280}
+        height={714}
+      />
+      <Composition
+        id="Segment6-Metrics"
+        component={Segment6Metrics}
+        durationInFrames={240}
+        fps={30}
+        width={1280}
+        height={714}
+      />
+      <Composition
+        id="Segment8-DeploymentImpact"
+        component={Segment8DeploymentImpact}
+        durationInFrames={240}
+        fps={30}
+        width={1280}
+        height={714}
+      />
+      <Composition
+        id="Segment10-Manifesto"
+        component={Segment10Manifesto}
+        durationInFrames={645}
         fps={30}
         width={1280}
         height={714}
