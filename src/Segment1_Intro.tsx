@@ -181,6 +181,38 @@ export const Segment1Intro: React.FC = () => {
   const frame = useCurrentFrame();
   const { fps, durationInFrames } = useVideoConfig();
 
+  // Glitch effect component for "6 weeks away"
+  const GlitchSpan: React.FC<{ children: React.ReactNode; delay: number }> = ({ children, delay }) => {
+    const localFrame = frame - delay;
+    // Glitch erratically for the first 45 frames (1.5s) after appearance
+    const isGlitching = localFrame > 0 && localFrame < 45 && Math.random() > 0.7;
+    
+    // We use a deterministic pseudo-random based on frame to avoid React warnings during render,
+    // but Remotion handles Math.random() ok in preview. Better to use sin/cos.
+    const glitchOn = localFrame > 0 && localFrame < 45 && Math.sin(localFrame * 12.3) > 0.5;
+
+    const glitchStyle = glitchOn ? {
+      textShadow: "4px 0 0 rgba(230,57,70,0.8), -4px 0 0 rgba(34,211,238,0.8)",
+      transform: `translate(${Math.sin(frame * 4) * 3}px, ${Math.cos(frame * 3) * 2}px)`
+    } : {};
+
+    return (
+      <span
+        style={{
+          fontWeight: 600,
+          background: glitchOn ? "none" : "linear-gradient(135deg, #60a5fa, #38bdf8, #22d3ee)",
+          color: glitchOn ? "white" : "transparent",
+          WebkitBackgroundClip: glitchOn ? "none" : "text",
+          WebkitTextFillColor: glitchOn ? "white" : "transparent",
+          display: "inline-block",
+          ...glitchStyle
+        }}
+      >
+        {children}
+      </span>
+    );
+  };
+
   const lineProgress = interpolate(frame, [0, fps * 0.8], [0, 1], {
     extrapolateRight: "clamp",
   });
@@ -192,8 +224,10 @@ export const Segment1Intro: React.FC = () => {
     { extrapolateLeft: "clamp", extrapolateRight: "clamp" }
   );
 
+  const scale = interpolate(frame, [0, durationInFrames], [1, 1.06]);
+
   return (
-    <AbsoluteFill style={{ opacity: fadeOut }}>
+    <AbsoluteFill style={{ opacity: fadeOut, transform: `scale(${scale})`, transformOrigin: "center center" }}>
       <IridescentBackground />
       <Particles />
 
@@ -331,16 +365,9 @@ export const Segment1Intro: React.FC = () => {
                 }}
               >
                 Her next check-up?{" "}
-                <span
-                  style={{
-                    fontWeight: 600,
-                    background: "linear-gradient(135deg, #60a5fa, #38bdf8, #22d3ee)",
-                    WebkitBackgroundClip: "text",
-                    WebkitTextFillColor: "transparent",
-                  }}
-                >
+                <GlitchSpan delay={Math.round(fps * 5.5)}>
                   6 weeks away.
-                </span>
+                </GlitchSpan>
               </h1>
             </SlideInText>
             <SlideInText delay={Math.round(fps * 0.6)} direction="up">

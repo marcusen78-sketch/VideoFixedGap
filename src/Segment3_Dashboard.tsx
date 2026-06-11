@@ -149,15 +149,20 @@ const SlideInText: React.FC<{
 const GlowBorder: React.FC<{
   progress: number;
   children: React.ReactNode;
-}> = ({ progress, children }) => {
+  tiltDirection?: "left" | "right";
+}> = ({ progress, children, tiltDirection = "right" }) => {
+  const frame = useCurrentFrame();
   const opacity = interpolate(progress, [0, 1], [0, 1]);
-  const scale = interpolate(progress, [0, 1], [0.96, 1]);
+  const startRotateY = tiltDirection === "right" ? 15 : -15;
+  const rotateY = interpolate(progress, [0, 1], [startRotateY, 0]);
+  const rotateX = interpolate(progress, [0, 1], [10, 0]);
+  const scale = interpolate(progress, [0, 1], [0.92, 1]);
 
   return (
     <div
       style={{
         opacity,
-        transform: `scale(${scale})`,
+        transform: `perspective(1200px) scale(${scale}) rotateX(${rotateX}deg) rotateY(${rotateY}deg)`,
         position: "relative",
         borderRadius: 12,
         padding: 2,
@@ -201,16 +206,24 @@ const TriageScene: React.FC = () => {
           position: "relative",
         }}
       >
-        <GlowBorder progress={imgProgress}>
-          <Img
-            src={staticFile("Dashboard2.jpeg")}
-            style={{
-              width: 660,
-              height: 420,
-              objectFit: "cover",
-              objectPosition: "top",
-            }}
-          />
+        <GlowBorder progress={imgProgress} tiltDirection="right">
+          <div style={{ position: "relative" }}>
+            <Img
+              src={staticFile("Dashboard2.jpeg")}
+              style={{
+                width: 660,
+                height: 420,
+                objectFit: "cover",
+                objectPosition: "top",
+              }}
+            />
+            {/* UI processing simulated flash */}
+            <div style={{
+              position: "absolute", top: "20%", right: "10%", width: 100, height: 60,
+              background: "rgba(34, 211, 238, 0.4)", filter: "blur(8px)", mixBlendMode: "screen",
+              opacity: Math.sin(frame * 0.2) > 0.8 ? 1 : 0
+            }} />
+          </div>
         </GlowBorder>
         <ScanLine progress={scanProgress} />
       </div>
@@ -457,16 +470,24 @@ const PatientDetailScene: React.FC = () => {
           position: "relative",
         }}
       >
-        <GlowBorder progress={imgProgress}>
-          <Img
-            src={staticFile("Dashboard1.jpeg")}
-            style={{
-              width: 700,
-              height: 440,
-              objectFit: "cover",
-              objectPosition: "top",
-            }}
-          />
+        <GlowBorder progress={imgProgress} tiltDirection="left">
+          <div style={{ position: "relative" }}>
+            <Img
+              src={staticFile("Dashboard1.jpeg")}
+              style={{
+                width: 700,
+                height: 440,
+                objectFit: "cover",
+                objectPosition: "top",
+              }}
+            />
+            {/* UI processing simulated flash */}
+            <div style={{
+              position: "absolute", bottom: "30%", left: "15%", width: 120, height: 40,
+              background: "rgba(34, 211, 238, 0.4)", filter: "blur(10px)", mixBlendMode: "screen",
+              opacity: Math.sin(frame * 0.15) > 0.7 ? 1 : 0
+            }} />
+          </div>
         </GlowBorder>
         <ScanLine progress={scanProgress} />
       </div>

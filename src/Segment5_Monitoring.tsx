@@ -542,7 +542,7 @@ const DataCounter: React.FC<{
   );
 };
 
-// Connection line from filled cell to center
+// Connection line from filled cell to center/counter
 const DataFlowLine: React.FC<{
   fromDay: number;
   progress: number;
@@ -556,24 +556,36 @@ const DataFlowLine: React.FC<{
   const startX = pos.x + CELL_WIDTH / 2;
   const startY = pos.y + CELL_HEIGHT / 2;
 
-  const pulse = Math.sin(localFrame * 0.1 + fromDay) * 0.3 + 0.5;
-  const opacity = pulse * interpolate(progress, [0.5, 1], [0, 0.15], {
-    extrapolateLeft: "clamp",
-    extrapolateRight: "clamp",
-  });
+  const targetX = 990;
+  const targetY = 520;
+
+  // Continuous data packets
+  const speed = 45; // frames to travel
+  const cycle = ((localFrame + fromDay * 23) % speed) / speed;
+  
+  // Ease-in-out for organic travel
+  const eased = cycle * cycle * (3 - 2 * cycle); 
+  
+  const currentX = startX + (targetX - startX) * eased;
+  const currentY = startY + (targetY - startY) * eased;
+
+  // Fade out as it reaches target
+  const opacity = interpolate(cycle, [0, 0.1, 0.8, 1], [0, 0.6, 0.6, 0]);
+  const angle = Math.atan2(targetY - startY, targetX - startX);
 
   return (
     <div
       style={{
         position: "absolute",
-        left: startX,
-        top: startY,
-        width: 3,
-        height: 3,
-        borderRadius: "50%",
-        backgroundColor: "#22d3ee",
+        left: currentX,
+        top: currentY,
+        width: 12,
+        height: 2,
+        borderRadius: 2,
+        backgroundColor: "#ffffff",
         opacity,
-        boxShadow: "0 0 4px #22d3ee",
+        boxShadow: "0 0 8px #22d3ee, 0 0 16px #38bdf8",
+        transform: `translate(-50%, -50%) rotate(${angle}rad)`,
       }}
     />
   );

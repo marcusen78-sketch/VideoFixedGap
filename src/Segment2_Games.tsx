@@ -136,8 +136,11 @@ const GameCard: React.FC<{
   const scale = interpolate(progress, [0, 1], [0.9, 1]);
   const translateY = interpolate(progress, [0, 1], [30, 0]);
 
-  const xOffset =
-    position === "left" ? -340 : position === "right" ? 340 : 0;
+  const xOffset = position === "left" ? -340 : position === "right" ? 340 : 0;
+  
+  // 3D Parallax Tilt
+  const tiltX = Math.sin(frame * 0.05 + delay * 0.1) * 8;
+  const tiltY = Math.cos(frame * 0.03 + delay * 0.1) * 8;
 
   return (
     <div
@@ -145,7 +148,7 @@ const GameCard: React.FC<{
         position: "absolute",
         left: "50%",
         top: "50%",
-        transform: `translate(calc(-50% + ${xOffset}px), calc(-50% + ${translateY}px)) scale(${scale})`,
+        transform: `translate(calc(-50% + ${xOffset}px), calc(-50% + ${translateY}px)) scale(${scale}) perspective(1000px) rotateX(${tiltX}deg) rotateY(${tiltY}deg)`,
         opacity,
         display: "flex",
         flexDirection: "column",
@@ -511,6 +514,8 @@ const SingleGameFocus: React.FC<{
                 width: "100%",
                 height: "100%",
                 objectFit: "cover",
+                transform: `scale(${interpolate(frame, [0, fps * 4], [1, 1.15])})`,
+                transformOrigin: "center center",
               }}
             />
           </div>

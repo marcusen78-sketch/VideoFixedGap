@@ -303,13 +303,12 @@ const MetricCard: React.FC<{
     { extrapolateLeft: "clamp", extrapolateRight: "clamp" }
   );
 
-  // Phase 4: Arc fills (0.5s - 1.3s)
-  const arcProgress = interpolate(
-    localFrame,
-    [fps * 0.5, fps * 1.3],
-    [0, 1],
-    { extrapolateLeft: "clamp", extrapolateRight: "clamp" }
-  );
+  // Phase 4: Arc fills (0.5s - ...)
+  const arcProgress = spring({
+    frame: Math.max(0, localFrame - fps * 0.5),
+    fps,
+    config: { damping: 12, stiffness: 100, mass: 0.8 },
+  });
 
   // Phase 5: Game tag appears (0.9s - 1.1s)
   const tagProgress = interpolate(
@@ -432,8 +431,8 @@ const Particles: React.FC = () => {
   );
 };
 
-// Connection lines between cards (subtle)
 const ConnectionLines: React.FC<{ progress: number }> = ({ progress }) => {
+  const frame = useCurrentFrame();
   if (progress < 0.3) return null;
 
   const opacity = interpolate(progress, [0.3, 0.8], [0, 0.08], {
@@ -468,9 +467,10 @@ const ConnectionLines: React.FC<{ progress: number }> = ({ progress }) => {
           x2={line.x2}
           y2={line.y2}
           stroke="#22d3ee"
-          strokeWidth={1}
-          opacity={opacity}
-          strokeDasharray="4 8"
+          strokeWidth={1.5}
+          opacity={opacity * 0.6}
+          strokeDasharray="6 8"
+          strokeDashoffset={-frame * 2.5}
         />
       ))}
     </svg>

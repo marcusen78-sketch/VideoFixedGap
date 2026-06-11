@@ -90,8 +90,32 @@ const ManifestoScene: React.FC = () => {
     extrapolateRight: "clamp",
   });
 
+  // Cinematic Heartbeat Pulse (Synchronized with phrase changes)
+  // Phrases change every PHRASE_DURATION (90 frames)
+  const localPhraseFrame = frame % PHRASE_DURATION;
+  
+  // Subtle double heartbeat (lub-dub) exactly when the phrase appears
+  // Lub: frames 0-4, Dub: frames 8-12
+  const isBeat = localPhraseFrame < 4 || (localPhraseFrame > 7 && localPhraseFrame < 12);
+  
+  // Much lower intensity so it doesn't distract from reading
+  const beatScale = 1 + (isBeat ? 0.008 : 0);
+  const vignetteOpacity = isBeat ? 0.06 : 0;
+
   return (
-    <AbsoluteFill style={{ backgroundColor: "#000" }}>
+    <AbsoluteFill style={{ backgroundColor: "#000", transform: `scale(${beatScale})`, transformOrigin: "center center" }}>
+      {/* Heartbeat Red Vignette */}
+      <div
+        style={{
+          position: "absolute",
+          inset: 0,
+          background: "radial-gradient(circle, transparent 40%, #e63946 100%)",
+          opacity: vignetteOpacity,
+          zIndex: 1,
+          pointerEvents: "none",
+        }}
+      />
+
       {/* Static GAP — absolutely positioned, never moves */}
       <div
         style={{

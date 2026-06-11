@@ -210,7 +210,7 @@ export const Segment4Notification: React.FC = () => {
   const notifSlide = spring({
     frame: Math.max(0, frame - Math.round(fps * 2.5)),
     fps,
-    config: { damping: 12, stiffness: 150, mass: 0.6 },
+    config: { damping: 8, stiffness: 160, mass: 0.8 }, // More bounce for realism
   });
 
   const notifY = interpolate(notifSlide, [0, 1], [-120, 180]);
@@ -224,6 +224,12 @@ export const Segment4Notification: React.FC = () => {
   const phoneBump = frame > fps * 2.5 && frame < fps * 2.8
     ? Math.sin((frame - fps * 2.5) * 0.8) * 2
     : 0;
+
+  // 3D Tilt Wake-up
+  const phoneRotateX = interpolate(frame, [fps * 1.5, fps * 2.5], [25, 0], {
+    extrapolateLeft: "clamp",
+    extrapolateRight: "clamp",
+  });
 
   // Text beside phone
   const textDelay = Math.round(fps * 3.5);
@@ -306,7 +312,7 @@ export const Segment4Notification: React.FC = () => {
           position: "absolute",
           top: "50%",
           left: "38%",
-          transform: `translate(-50%, -50%) scale(${phoneScale}) translateY(${phoneBump}px)`,
+          transform: `translate(-50%, -50%) perspective(1200px) rotateX(${phoneRotateX}deg) scale(${phoneScale}) translateY(${phoneBump}px)`,
         }}
       >
         <PulseRing delay={Math.round(fps * 2.5)} />
