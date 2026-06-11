@@ -1,0 +1,21 @@
+{
+  "permissions": {
+    "allow": [
+      "Bash(npm init *)",
+      "Bash(npm install *)",
+      "Bash(ffprobe *)",
+      "Bash(where ffprobe *)",
+      "Bash(where ffmpeg *)",
+      "Read(//c/Users/USUARIO/AppData/Roaming/npm/**)",
+      "Read(//c/Users/USUARIO/AppData/Roaming/npm/node_modules/**)",
+      "Bash(/c/Users/USUARIO/AppData/Roaming/npm/node_modules/ffmpeg-static/ffmpeg.exe -i C:/Users/USUARIO/Desktop/VideoDemo/resources/VideoReferencia.mp4 -hide_banner)",
+      "Bash($FFMPEG *)",
+      "Bash(/c/Users/USUARIO/AppData/Roaming/npm/node_modules/ffmpeg-static/ffmpeg.exe -i C:/Users/USUARIO/Desktop/VideoDemo/resources/VideoReferencia.mp4 -ss 00:00:01 -frames:v 1 -q:v 2 C:/Users/USUARIO/Desktop/VideoDemo/resources/frames/detail_01s.jpg -y)",
+      "Bash(npx tsc *)",
+      "Bash(npx remotion *)",
+      "Bash(dir /b \"C:\\\\Users\\\\USUARIO\\\\Desktop\\\\VideoDemo\")",
+      "Bash(cp \"C:\\\\Users\\\\USUARIO\\\\Desktop\\\\VideoDemo\\\\Resources\\\\Dashboard1.jpeg\" \"C:\\\\Users\\\\USUARIO\\\\Desktop\\\\VideoDemo\\\\public\\\\Dashboard1.jpeg\")",
+      "Bash(cp \"C:\\\\Users\\\\USUARIO\\\\Desktop\\\\VideoDemo\\\\Resources\\\\Dashboard2.jpeg\" \"C:\\\\Users\\\\USUARIO\\\\Desktop\\\\VideoDemo\\\\public\\\\Dashboard2.jpeg\")"
+    ]
+  }
+}
